@@ -5,10 +5,9 @@ import com.kinal.libreria_online.model.Usuario;
 import com.kinal.libreria_online.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,13 +18,6 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
-
-    @PostMapping
-    public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario usuario){
-
-        return ResponseEntity.ok(usuarioService.crearUsuario(usuario));
-
-    }
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest){
@@ -47,5 +39,28 @@ public class UsuarioController {
         }
 
     }
+
+    @PostMapping
+    public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario usuario){
+
+        return ResponseEntity.ok(usuarioService.crearUsuario(usuario));
+
+    }
+
+    @GetMapping("/")
+    public ResponseEntity<Usuario> obtenerUsuarioTokenActivo(@AuthenticationPrincipal UserDetails userDetails){
+
+        Usuario usuario = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername());
+
+        if(usuario != null){
+
+            return ResponseEntity.ok(usuario);
+
+        }
+
+        return ResponseEntity.status(404).body(null);
+
+    }
+
 
 }
