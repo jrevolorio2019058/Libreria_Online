@@ -166,8 +166,6 @@ public class UsuarioService {
 
         }
 
-        System.out.println(DPI);
-
         Usuario usuario = obtenerUsuarioPorDPI(DPI);
 
         if(usuario == null){
@@ -179,6 +177,22 @@ public class UsuarioService {
         usuarioRepository.delete(usuario);
 
         return "Usuario eliminado.";
+
+    }
+
+    public Usuario buscarPorDPI(BigInteger DPI){
+
+        System.out.println(DPI);
+
+        Usuario usuario = obtenerUsuarioPorDPI(DPI);
+
+        if(usuario == null){
+
+            return null;
+
+        }
+
+        return usuario;
 
     }
 

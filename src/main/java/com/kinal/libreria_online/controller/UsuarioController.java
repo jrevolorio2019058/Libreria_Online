@@ -1,5 +1,6 @@
 package com.kinal.libreria_online.controller;
 
+import com.kinal.libreria_online.DTO.BuscarUsuarioRequest;
 import com.kinal.libreria_online.DTO.EliminarUsuarioRequest;
 import com.kinal.libreria_online.DTO.LoginRequest;
 import com.kinal.libreria_online.model.Usuario;
@@ -11,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,6 +140,31 @@ public class UsuarioController {
         }
 
         return ResponseEntity.ok(mensaje);
+
+    }
+
+    @GetMapping("/buscarUsuario")
+    public ResponseEntity<?> buscarUsuario(@RequestBody BuscarUsuarioRequest request, @AuthenticationPrincipal UserDetails userDetails){
+
+        String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+        ResponseEntity<String> roleCheck = verificacionRole(roleAuth);
+
+        if(roleCheck != null){
+
+            return roleCheck;
+
+        }
+
+        verificacionRole(roleAuth);
+
+        Usuario usuario = usuarioService.buscarPorDPI(request.getDPI());
+
+        if (usuario == null) {
+            return ResponseEntity.badRequest().body("Usuario no encontrado.");
+        }
+
+        return ResponseEntity.ok(usuario);
 
     }
 
