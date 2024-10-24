@@ -1,8 +1,12 @@
 package com.kinal.libreria_online.service;
 
+import com.kinal.libreria_online.exceptions.DPIAlreadyUsedException;
+import com.kinal.libreria_online.exceptions.EmailAlreadyUsedException;
+import com.kinal.libreria_online.exceptions.RoleNotValidException;
 import com.kinal.libreria_online.factory.UsuarioFactory;
 import com.kinal.libreria_online.model.LoginRequest;
 import com.kinal.libreria_online.model.Usuario;
+import com.kinal.libreria_online.repository.RoleRepository;
 import com.kinal.libreria_online.repository.UsuarioRepository;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -15,11 +19,87 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import java.math.BigInteger;
 import java.security.Key;
 import java.util.Date;
+import java.util.List;
 
 @Service
 public class UsuarioService {
 
     private static Usuario usuarioPorDefecto;
+
+    @Autowired
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private RoleRepository roleRepository;
+
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private UsuarioFactory usuarioFactory;
+
+    @PostConstruct
+    public void init(){
+
+        if(usuarioRepository.count() == 0) {
+
+            Usuario usuarioPorDefecto = usuarioFactory.crearUsuarioDefecto();
+
+            usuarioPorDefecto.setClave(passwordEncoder.encode(usuarioPorDefecto.getClave()));
+
+            usuarioRepository.save(usuarioPorDefecto);
+
+        }
+
+    }
+
+    public Usuario crearUsuario(Usuario usuario){
+
+        if(usuarioRepository.existsByEmail(usuario.getEmail())){
+
+            throw new EmailAlreadyUsedException("El correo electrónico ya está en uso.");
+
+        }
+
+        if (usuarioRepository.existsByDPI(usuario.getDPI())) {
+            throw new DPIAlreadyUsedException("El DPI ya está en uso.");
+        }
+
+        if (!roleRepository.existsByRoleName(usuario.getRole())) {
+            throw new RoleNotValidException("El rol proporcionado no existe o no es válido.");
+        }
+
+        return guardarUsuario(usuario);
+
+    }
+
+    private Usuario guardarUsuario(Usuario usuario){
+
+        usuario.setClave(passwordEncoder.encode(usuario.getClave()));
+
+        return usuarioRepository.save(usuario);
+
+    }
+
+    public Usuario obtenerUsuarioPorEmail(String email){
+
+        return usuarioRepository.findByEmail(email);
+
+    }
+
+    public String autenticarUsuario(LoginRequest loginRequest){
+
+        Usuario usuario = obtenerUsuarioPorEmail(loginRequest.getEmail());
+
+        if(usuario != null && passwordEncoder.matches(loginRequest.getPassword(), usuario.getClave())){
+
+            return generarToken(usuario);
+
+        }
+
+        return null;
+
+    }
 
     public static Usuario getUsuarioPorDefecto() {
 
@@ -52,58 +132,6 @@ public class UsuarioService {
 
     }
 
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UsuarioFactory usuarioFactory;
-
-    @PostConstruct
-    public void init(){
-
-        if(usuarioRepository.count() == 0) {
-
-            Usuario usuarioPorDefecto = usuarioFactory.crearUsuarioDefecto();
-
-            usuarioPorDefecto.setClave(passwordEncoder.encode(usuarioPorDefecto.getClave()));
-
-            usuarioRepository.save(usuarioPorDefecto);
-
-        }
-
-    }
-
-    public Usuario crearUsuario(Usuario usuario){
-
-        usuario.setClave(passwordEncoder.encode(usuario.getClave()));
-
-        return usuarioRepository.save(usuario);
-
-    }
-
-    public Usuario obtenerUsuarioPorEmail(String email){
-
-        return usuarioRepository.findByEmail(email);
-
-    }
-
-    public String autenticarUsuario(LoginRequest loginRequest){
-
-        Usuario usuario = obtenerUsuarioPorEmail(loginRequest.getEmail());
-
-        if(usuario != null && passwordEncoder.matches(loginRequest.getPassword(), usuario.getClave())){
-
-            return generarToken(usuario);
-
-        }
-
-        return null;
-
-    }
-
     private String generarToken(Usuario usuario) {
         Key key = Keys.hmacShaKeyFor("mi_clave_secreta_para_jwt_que_debe_ser_lo_suficientemente_larga".getBytes());
 
@@ -122,6 +150,20 @@ public class UsuarioService {
                 .setExpiration(new Date(System.currentTimeMillis() + 864_000_000))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public List<Usuario> listarUsuarios(){
+
+        return usuarioRepository.findAll();
+
+    }
+
+    public boolean existePorEmail(String email) {
+        return usuarioRepository.existsByEmail(email);
+    }
+
+    public boolean existePorDPI(BigInteger dpi) {
+        return usuarioRepository.existsByDPI(dpi);
     }
 
 

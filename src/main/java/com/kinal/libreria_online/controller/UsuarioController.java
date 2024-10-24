@@ -2,6 +2,7 @@ package com.kinal.libreria_online.controller;
 
 import com.kinal.libreria_online.model.LoginRequest;
 import com.kinal.libreria_online.model.Usuario;
+import com.kinal.libreria_online.service.RoleService;
 import com.kinal.libreria_online.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +11,7 @@ import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -18,6 +20,9 @@ public class UsuarioController {
 
     @Autowired
     private UsuarioService usuarioService;
+
+    @Autowired
+    private RoleService roleService;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest){
@@ -40,25 +45,61 @@ public class UsuarioController {
 
     }
 
-    @PostMapping
-    public ResponseEntity<Usuario> crearUsuario(@RequestBody Usuario usuario){
+    @PostMapping("/crearUsuario")
+    public ResponseEntity<?> crearUsuario(@RequestBody Usuario usuario, @AuthenticationPrincipal UserDetails userDetails) {
 
-        return ResponseEntity.ok(usuarioService.crearUsuario(usuario));
+        try{
+
+            String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+            if(!"admin".equals(roleAuth)){
+
+                return ResponseEntity.status(403).body("Role no autorizado");
+
+            }
+
+            if(!roleService.existeRol(roleAuth)){
+
+                return ResponseEntity.status(400).body("Role no existe: " + roleAuth);
+
+            }
+
+            if (usuarioService.existePorEmail(usuario.getEmail())) {
+                return ResponseEntity.badRequest().body("El correo ya está en uso.");
+            }
+
+            if (usuarioService.existePorDPI(usuario.getDPI())) {
+                return ResponseEntity.badRequest().body("El DPI ya está en uso.");
+            }
+
+            if (!roleService.existeRol(usuario.getRole())) {
+                return ResponseEntity.badRequest().body("El rol no existe o no es válido.");
+            }
+
+            Usuario usuarioCreado = usuarioService.crearUsuario(usuario);
+
+            return ResponseEntity.ok(usuarioCreado);
+
+        }catch(Exception e){
+
+            return ResponseEntity.status(500).body("Error | Usuario no creado: " + e.getMessage());
+
+        }
 
     }
 
     @GetMapping("/")
-    public ResponseEntity<Usuario> obtenerUsuarioTokenActivo(@AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<List<Usuario>> obtenerUsuarioTokenActivo(@AuthenticationPrincipal UserDetails userDetails){
 
-        Usuario usuario = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername());
+        List<Usuario> usuarios = usuarioService.listarUsuarios();
 
-        if(usuario != null){
+        if(usuarios.isEmpty()){
 
-            return ResponseEntity.ok(usuario);
+            return ResponseEntity.noContent().build();
 
         }
 
-        return ResponseEntity.status(404).body(null);
+        return ResponseEntity.ok(usuarios);
 
     }
 
