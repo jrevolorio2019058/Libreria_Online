@@ -1,5 +1,6 @@
 package com.kinal.libreria_online.service;
 
+import com.kinal.libreria_online.DTO.EditarLibroRequest;
 import com.kinal.libreria_online.model.Libro;
 import com.kinal.libreria_online.repository.LibroRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,18 +35,32 @@ public class LibroService {
         return libroRepository.findByIsbn(isbn);
     }
 
-    public Libro actualizarLibro(String isbn, Libro libroDetalles) {
-        Optional<Libro> optionalLibro = libroRepository.findByIsbn(isbn);
+    public Libro actualizarLibro(EditarLibroRequest editarLibroRequest) {
+
+        Optional<Libro> optionalLibro = libroRepository.findById(editarLibroRequest.getIsbn());
+
         if (optionalLibro.isPresent()) {
-            Libro libro = optionalLibro.get();
-            libro.setTitulo(libroDetalles.getTitulo());
-            libro.setAutor(libroDetalles.getAutor());
-            libro.setEditorial(libroDetalles.getEditorial());
-            libro.setGenero(libroDetalles.getGenero());
-            libro.setIdioma(libroDetalles.getIdioma());
-            libro.setPrestado(libroDetalles.isPrestado());
-            return libroRepository.save(libro);
+            Libro libroExistente = optionalLibro.get();
+
+            if (editarLibroRequest.getTitulo() != null) {
+                libroExistente.setTitulo(editarLibroRequest.getTitulo());
+            }
+            if (editarLibroRequest.getAutor() != null) {
+                libroExistente.setAutor(editarLibroRequest.getAutor());
+            }
+            if (editarLibroRequest.getEditorial() != null) {
+                libroExistente.setEditorial(editarLibroRequest.getEditorial());
+            }
+            if (editarLibroRequest.getGenero() != null) {
+                libroExistente.setGenero(editarLibroRequest.getGenero());
+            }
+            if (editarLibroRequest.getIdioma() != null) {
+                libroExistente.setIdioma(editarLibroRequest.getIdioma());
+            }
+
+            return libroRepository.save(libroExistente);
         }
+
         return null;
     }
 

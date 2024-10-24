@@ -1,6 +1,7 @@
 package com.kinal.libreria_online.controller;
 
 import com.kinal.libreria_online.DTO.BuscarLibroDTORequest;
+import com.kinal.libreria_online.DTO.EditarLibroRequest;
 import com.kinal.libreria_online.DTO.EliminarLibroRequest;
 import com.kinal.libreria_online.model.Libro;
 import com.kinal.libreria_online.service.LibroService;
@@ -97,17 +98,43 @@ public class LibroController {
 
     }
 
-    @PutMapping("/actualizar/{isbn}")
-    public ResponseEntity<?> actualizarLibro(@PathVariable String isbn, @RequestBody Libro libroDetalles) {
-        Libro libroActualizado = libroService.actualizarLibro(isbn, libroDetalles);
-        if (libroActualizado == null) {
-            return ResponseEntity.badRequest().body("Libro no encontrado.");
+    @PutMapping("/actualizarLibro")
+    public ResponseEntity<?> actualizarLibro(@RequestBody EditarLibroRequest editarLibroRequest, @AuthenticationPrincipal UserDetails userDetails) {
+
+        String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+        ResponseEntity<String> roleCheck = usuarioController.verificacionRole(roleAuth);
+
+        if(roleCheck != null){
+
+            return roleCheck;
+
         }
+
+        Libro libroActualizado = libroService.actualizarLibro(editarLibroRequest);
+
+        if (libroActualizado == null) {
+
+            return ResponseEntity.badRequest().body("Libro no encontrado.");
+
+        }
+
         return ResponseEntity.ok(libroActualizado);
+
     }
 
     @DeleteMapping("/eliminarLibro")
-    public ResponseEntity<String> eliminarLibro(@RequestBody EliminarLibroRequest eliminarLibroRequest) {
+    public ResponseEntity<String> eliminarLibro(@RequestBody EliminarLibroRequest eliminarLibroRequest, @AuthenticationPrincipal UserDetails userDetails) {
+
+        String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+        ResponseEntity<String> roleCheck = usuarioController.verificacionRole(roleAuth);
+
+        if(roleCheck != null){
+
+            return roleCheck;
+
+        }
 
         String isbn = eliminarLibroRequest.getISBN();
 
