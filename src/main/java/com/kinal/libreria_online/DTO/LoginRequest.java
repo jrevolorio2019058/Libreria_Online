@@ -1,4 +1,4 @@
-package com.kinal.libreria_online.model;
+package com.kinal.libreria_online.DTO;
 
 import lombok.Data;
 

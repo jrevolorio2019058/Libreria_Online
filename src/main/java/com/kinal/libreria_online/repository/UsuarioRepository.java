@@ -11,6 +11,7 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     boolean existsByEmail(String email);
 
-    boolean existsByDPI(BigInteger DPI);
+    Usuario findByDPI(BigInteger DPI);
 
+    boolean existsByDPI(BigInteger DPI);
 }

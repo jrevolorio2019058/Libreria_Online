@@ -1,6 +1,7 @@
 package com.kinal.libreria_online.controller;
 
-import com.kinal.libreria_online.model.LoginRequest;
+import com.kinal.libreria_online.DTO.EliminarUsuarioRequest;
+import com.kinal.libreria_online.DTO.LoginRequest;
 import com.kinal.libreria_online.model.Usuario;
 import com.kinal.libreria_online.service.RoleService;
 import com.kinal.libreria_online.service.UsuarioService;
@@ -52,17 +53,15 @@ public class UsuarioController {
 
             String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
 
-            if(!"admin".equals(roleAuth)){
+            ResponseEntity<String> roleCheck = verificacionRole(roleAuth);
 
-                return ResponseEntity.status(403).body("Role no autorizado");
+            if(roleCheck != null){
 
-            }
-
-            if(!roleService.existeRol(roleAuth)){
-
-                return ResponseEntity.status(400).body("Role no existe: " + roleAuth);
+                return roleCheck;
 
             }
+
+            verificacionRole(roleAuth);
 
             if (usuarioService.existePorEmail(usuario.getEmail())) {
                 return ResponseEntity.badRequest().body("El correo ya está en uso.");
@@ -88,22 +87,20 @@ public class UsuarioController {
 
     }
 
-    @GetMapping("/")
+    @GetMapping("/listarUsuarios")
     public ResponseEntity<?> listarUsuarios(@AuthenticationPrincipal UserDetails userDetails){
 
         String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
 
-        if(!"admin".equals(roleAuth)){
+        ResponseEntity<String> roleCheck = verificacionRole(roleAuth);
 
-            return ResponseEntity.status(403).body("Role no autorizado");
+        if(roleCheck != null){
 
-        }
-
-        if(!roleService.existeRol(roleAuth)){
-
-            return ResponseEntity.status(400).body("Role no existe: " + roleAuth);
+            return roleCheck;
 
         }
+
+        verificacionRole(roleAuth);
 
         List<Usuario> usuarios = usuarioService.listarUsuarios();
 
@@ -114,6 +111,45 @@ public class UsuarioController {
         }
 
         return ResponseEntity.ok(usuarios);
+
+    }
+
+    @DeleteMapping("/eliminarUsuario")
+    public ResponseEntity<?> eliminarUsuario(@RequestBody EliminarUsuarioRequest request, @AuthenticationPrincipal UserDetails userDetails){
+
+        String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+        ResponseEntity<String> roleCheck = verificacionRole(roleAuth);
+
+        if(roleCheck != null){
+
+            return roleCheck;
+
+        }
+
+        verificacionRole(roleAuth);
+
+        String mensaje = usuarioService.eliminarUsuario(request.DPI, request.isAutorizacion());
+
+        if(mensaje.equals("Operación cancelada") || mensaje.equals("Usuario no encontrado")){
+
+            return ResponseEntity.badRequest().body(mensaje);
+
+        }
+
+        return ResponseEntity.ok(mensaje);
+
+    }
+
+    public ResponseEntity<String> verificacionRole(String roleAuth){
+
+        if("admin".equals(roleAuth)){
+
+            return null;
+
+        }
+
+        return ResponseEntity.status(403).body("Role no autorizado");
 
     }
 

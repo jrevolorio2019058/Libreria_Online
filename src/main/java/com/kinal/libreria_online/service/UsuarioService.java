@@ -4,7 +4,7 @@ import com.kinal.libreria_online.exceptions.DPIAlreadyUsedException;
 import com.kinal.libreria_online.exceptions.EmailAlreadyUsedException;
 import com.kinal.libreria_online.exceptions.RoleNotValidException;
 import com.kinal.libreria_online.factory.UsuarioFactory;
-import com.kinal.libreria_online.model.LoginRequest;
+import com.kinal.libreria_online.DTO.LoginRequest;
 import com.kinal.libreria_online.model.Usuario;
 import com.kinal.libreria_online.repository.RoleRepository;
 import com.kinal.libreria_online.repository.UsuarioRepository;
@@ -158,12 +158,44 @@ public class UsuarioService {
 
     }
 
+    public String eliminarUsuario(BigInteger DPI, boolean autorizacion){
+
+        if(!autorizacion){
+
+            return "Operación Cancelada.";
+
+        }
+
+        System.out.println(DPI);
+
+        Usuario usuario = obtenerUsuarioPorDPI(DPI);
+
+        if(usuario == null){
+
+            return "Usuario no encontrado.";
+
+        }
+
+        usuarioRepository.delete(usuario);
+
+        return "Usuario eliminado.";
+
+    }
+
     public boolean existePorEmail(String email) {
         return usuarioRepository.existsByEmail(email);
     }
 
-    public boolean existePorDPI(BigInteger dpi) {
-        return usuarioRepository.existsByDPI(dpi);
+    public Usuario obtenerUsuarioPorDPI(BigInteger DPI){
+
+        return usuarioRepository.findByDPI(DPI);
+
+    }
+
+    public boolean existePorDPI(BigInteger DPI) {
+
+        return usuarioRepository.existsByDPI(DPI);
+
     }
 
 
