@@ -1,14 +1,17 @@
 package com.kinal.libreria_online.controller;
 
 import com.kinal.libreria_online.DTO.BuscarUsuarioRequest;
+import com.kinal.libreria_online.DTO.EditarUsuarioRequest;
 import com.kinal.libreria_online.DTO.EliminarUsuarioRequest;
 import com.kinal.libreria_online.DTO.LoginRequest;
 import com.kinal.libreria_online.model.Usuario;
+import com.kinal.libreria_online.repository.UsuarioRepository;
 import com.kinal.libreria_online.service.RoleService;
 import com.kinal.libreria_online.service.UsuarioService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +29,12 @@ public class UsuarioController {
 
     @Autowired
     private RoleService roleService;
+    @Autowired
+
+    private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @PostMapping("/login")
     public ResponseEntity<String> login(@RequestBody LoginRequest loginRequest){
@@ -165,6 +174,67 @@ public class UsuarioController {
         }
 
         return ResponseEntity.ok(usuario);
+
+    }
+
+    @PutMapping("/editarUsuario")
+    public ResponseEntity<?> editarUsuario(@RequestBody EditarUsuarioRequest request, @AuthenticationPrincipal UserDetails userDetails){
+
+        String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+        ResponseEntity<String> roleCheck = verificacionRole(roleAuth);
+
+        if(roleCheck != null){
+
+            return roleCheck;
+
+        }
+
+        Usuario usuario = usuarioService.buscarPorDPI(request.getDPI());
+
+        if(usuario == null){
+
+            return ResponseEntity.badRequest().body("Usuario no encontrado");
+
+        }
+
+        if (request.getNombre() != null) {
+            usuario.setNombres(request.getNombre());
+        }
+
+        if (request.getApellido() != null) {
+            usuario.setApellidos(request.getApellido());
+        }
+
+        if (request.getEdad() != null) {
+            usuario.setEdad(request.getEdad());
+        }
+
+        if (request.getClave() != null) {
+
+            String claveCifrada = passwordEncoder.encode(request.getClave());
+
+            usuario.setClave(claveCifrada);
+
+        }
+
+        if(request.getEmail() != null){
+
+            usuario.setEmail(request.getEmail());
+
+        }
+
+        if (request.getTelefono() != null) {
+            usuario.setTelefono(request.getTelefono());
+        }
+
+        if (request.getDireccion() != null) {
+            usuario.setDireccion(request.getDireccion());
+        }
+
+        usuarioRepository.save(usuario);
+
+        return ResponseEntity.ok("Usuario actualizado exitosamente");
 
     }
 
