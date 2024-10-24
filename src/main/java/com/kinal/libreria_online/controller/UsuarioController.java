@@ -89,7 +89,21 @@ public class UsuarioController {
     }
 
     @GetMapping("/")
-    public ResponseEntity<List<Usuario>> obtenerUsuarioTokenActivo(@AuthenticationPrincipal UserDetails userDetails){
+    public ResponseEntity<?> listarUsuarios(@AuthenticationPrincipal UserDetails userDetails){
+
+        String roleAuth = usuarioService.obtenerUsuarioPorEmail(userDetails.getUsername()).getRole();
+
+        if(!"admin".equals(roleAuth)){
+
+            return ResponseEntity.status(403).body("Role no autorizado");
+
+        }
+
+        if(!roleService.existeRol(roleAuth)){
+
+            return ResponseEntity.status(400).body("Role no existe: " + roleAuth);
+
+        }
 
         List<Usuario> usuarios = usuarioService.listarUsuarios();
 
