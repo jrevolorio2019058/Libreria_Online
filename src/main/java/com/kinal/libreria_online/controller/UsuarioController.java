@@ -250,5 +250,17 @@ public class UsuarioController {
 
     }
 
+    public ResponseEntity<String> verificacionRoleGeneral(String roleAuth){
+
+        if("admin".equals(roleAuth) || "user".equals(roleAuth)){
+
+            return null;
+
+        }
+
+        return ResponseEntity.status(403).body("Role no autorizado");
+
+    }
+
 
 }
