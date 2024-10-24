@@ -137,7 +137,6 @@ public class UsuarioService {
 
         return Jwts.builder()
                 .setSubject(usuario.getEmail())
-                .claim("id", usuario.getId())
                 .claim("DPI", usuario.getDPI())
                 .claim("nombres", usuario.getNombres())
                 .claim("apellidos", usuario.getApellidos())

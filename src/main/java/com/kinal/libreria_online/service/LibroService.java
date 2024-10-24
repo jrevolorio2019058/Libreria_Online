@@ -49,8 +49,16 @@ public class LibroService {
         return null;
     }
 
-    public String eliminarLibro(String isbn) {
+    public String eliminarLibro(String isbn, boolean autorizacion) {
+
+        if(autorizacion == false) {
+
+            return "proceso cancelado";
+
+        }
+
         Optional<Libro> optionalLibro = libroRepository.findByIsbn(isbn);
+
         if (optionalLibro.isPresent()) {
             libroRepository.delete(optionalLibro.get());
             return "Libro eliminado.";
@@ -61,5 +69,7 @@ public class LibroService {
     private String generarISBN() {
         return "ISBN-" + UUID.randomUUID().toString();
     }
+
+
 
 }

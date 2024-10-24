@@ -1,6 +1,7 @@
 package com.kinal.libreria_online.controller;
 
 import com.kinal.libreria_online.DTO.BuscarLibroDTORequest;
+import com.kinal.libreria_online.DTO.EliminarLibroRequest;
 import com.kinal.libreria_online.model.Libro;
 import com.kinal.libreria_online.service.LibroService;
 import com.kinal.libreria_online.service.UsuarioService;
@@ -105,13 +106,20 @@ public class LibroController {
         return ResponseEntity.ok(libroActualizado);
     }
 
-    @DeleteMapping("/eliminar/{isbn}")
-    public ResponseEntity<String> eliminarLibro(@PathVariable String isbn) {
-        String resultado = libroService.eliminarLibro(isbn);
-        if (resultado.equals("Libro no encontrado.")) {
-            return ResponseEntity.badRequest().body(resultado);
+    @DeleteMapping("/eliminarLibro")
+    public ResponseEntity<String> eliminarLibro(@RequestBody EliminarLibroRequest eliminarLibroRequest) {
+
+        String isbn = eliminarLibroRequest.getISBN();
+
+        String mensaje = libroService.eliminarLibro(isbn, eliminarLibroRequest.isAutorizacion());
+
+        if(mensaje.equals("Operación cancelada") || mensaje.equals("Libro no encontrado")){
+
+            return ResponseEntity.badRequest().body(mensaje);
+
         }
-        return ResponseEntity.ok(resultado);
+
+        return ResponseEntity.ok(mensaje);
     }
 
 }
